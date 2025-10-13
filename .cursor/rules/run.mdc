@@ -1,9 +1,0 @@
----
-description: Запуск приложения оркестратора
-globs:
-alwaysApply: false
----
-Основное приложение оркестратор должно запускаться командой
-````bash
-uvicorn main:app --host 0.0.0.0 --port 8080 --reload
-````
