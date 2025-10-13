@@ -1,22 +1,23 @@
 import asyncio
 from agents import Agent, Runner, WebSearchTool
+from agents.extensions.memory.sqlalchemy_session import SQLAlchemySession
 
 # Import configuration and tools
-from config import load_environment, validate_environment, get_agent_config, get_welcome_message
+from config import load_environment, validate_environment, get_agent_config, get_welcome_message, create_session_manager
 from tools import execute_sql_query, execute_shell_command
 
 
 # All tool functions are now imported from the tools package
 
 
-async def process_user_input(agent: Agent, user_input: str) -> None:
+async def process_user_input(agent: Agent, user_input: str, session: SQLAlchemySession) -> None:
     """Process a single user input with the AI agent using streaming."""
     print("\n🤖 Processing your request...")
     print("=" * 60)
     
     try:
-        # Use run_streamed for proper streaming
-        result = Runner.run_streamed(agent, user_input)
+        # Use run_streamed with session for context preservation
+        result = Runner.run_streamed(agent, user_input, session=session)
         
         print("\n🎯 Agent Response:")
         print("-" * 60)
@@ -65,10 +66,17 @@ async def main():
         tools=[execute_sql_query, execute_shell_command, WebSearchTool()]
     )
     
+    # Initialize session manager
+    session_manager = create_session_manager()
+    
+    # Create a new session for this conversation
+    session = session_manager.create_session(create_tables=True)
+    
     # Display welcome message
     welcome_lines = get_welcome_message()
     for line in welcome_lines:
         print(line)
+    print(f"📋 Session ID: {session_manager.get_current_session_id()}")
     print("=" * 80)
     
     # Interactive chat loop
@@ -88,8 +96,8 @@ async def main():
                 print("Please enter a message or type 'exit' to quit.")
                 continue
             
-            # Process the user input
-            await process_user_input(agent, user_input)
+            # Process the user input with session context
+            await process_user_input(agent, user_input, session)
             
         except KeyboardInterrupt:
             print("\n\n👋 Chat interrupted. Goodbye!")
@@ -100,6 +108,12 @@ async def main():
         except Exception as e:
             print(f"\n❌ Unexpected error: {str(e)}")
             print("Please try again or type 'exit' to quit.")
+    
+    # Cleanup resources
+    try:
+        await session_manager.cleanup()
+    except Exception as e:
+        print(f"\n⚠️ Warning: Error during cleanup: {str(e)}")
 
 
 if __name__ == "__main__":
