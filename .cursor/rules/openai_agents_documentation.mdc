@@ -1,0 +1,19 @@
+---
+description: Документация по OpenAI Agents SDK
+alwaysApply: true
+---
+Обязательно использовать доступные возможности, ориентировать на примеры из документации при разработке:
+- https://openai.github.io/openai-agents-python/agents/
+- https://openai.github.io/openai-agents-python/running_agents/
+- https://openai.github.io/openai-agents-python/sessions/
+- https://openai.github.io/openai-agents-python/results/
+- https://openai.github.io/openai-agents-python/streaming/
+- https://openai.github.io/openai-agents-python/tools/
+- https://openai.github.io/openai-agents-python/handoffs/
+- https://openai.github.io/openai-agents-python/tracing/
+- https://openai.github.io/openai-agents-python/context/
+- https://openai.github.io/openai-agents-python/guardrails/
+- https://openai.github.io/openai-agents-python/multi_agent/
+- https://openai.github.io/openai-agents-python/ref/agent_output/
+- https://openai.github.io/openai-agents-python/models/
+- https://openai.github.io/openai-agents-python/config/

@@ -1,0 +1,14 @@
+---
+description: Stack
+globs:
+alwaysApply: true
+---
+
+Stack:
+* **Web/API:** FastAPI (контроллеры), Pydantic v2 для IO-схем, Uvicorn.
+* **БД/ORM:** PostgreSQL + SQLAlchemy 2.0. Миграции — Alembic.
+* **Vector Storage:** OpenSearch
+* **Сообщения:** Kafka (или RabbitMQ/NATS). Внутренний bus (синхронный) для доменных реакций внешний — через outbox.
+* **CQRS Read-Model:** отдельные DAO, простые SQL, материализованные представления, индексы/CTE для аналитики — отдельное хранилище/поисковик (например, OpenSearch).
+* **Observability:** OpenTelemetry (трейсы/метрики/логи) + экспортер в Prometheus/OTLP авто-инструментирование FastAPI/requests.
+* **Тестирование:** юнит-тесты домена (без БД), контрактные тесты адаптеров, интеграционные — поверх use-cases, e2e — поверх API. «Фейковые» репозитории легко подменяются благодаря портам.

@@ -1,0 +1,174 @@
+---
+description: Dependency Inversion Principle (DIP)
+globs:
+alwaysApply: true
+---
+
+# Dependency Inversion Principle (DIP) in Python
+
+**Definition**:
+
+> *High-level modules should not depend on low-level modules. Both should depend on abstractions.*
+> *Abstractions should not depend on details. Details should depend on abstractions.*
+
+This prevents “hard-wiring” implementations into business logic.
+
+---
+
+## 📌 1. Classes
+
+❌ Bad example (Trainer tightly coupled to LogisticRegression):
+
+```python
+class LogisticRegressionModel:
+    def fit(self, X, y): ...
+    def predict(self, X): ...
+
+class Trainer:
+    def __init__(self):
+        self.model = LogisticRegressionModel()  # hard dependency
+
+    def train(self, X, y):
+        self.model.fit(X, y)
+```
+
+✅ Good example (Trainer depends on abstraction, not concrete class):
+
+```python
+from abc import ABC, abstractmethod
+
+class Model(ABC):
+    @abstractmethod
+    def fit(self, X, y): ...
+    @abstractmethod
+    def predict(self, X): ...
+
+class LogisticRegressionModel(Model):
+    def fit(self, X, y): ...
+    def predict(self, X): ...
+
+class RandomForestModel(Model):
+    def fit(self, X, y): ...
+    def predict(self, X): ...
+
+class Trainer:
+    def __init__(self, model: Model):
+        self.model = model  # injected at runtime
+
+    def train(self, X, y):
+        self.model.fit(X, y)
+```
+
+Now `Trainer` works with *any* `Model` implementation.
+
+---
+
+## 📌 2. Functions
+
+❌ Bad example (direct dependency):
+
+```python
+def evaluate(model, X, y):
+    from sklearn.metrics import accuracy_score
+    return accuracy_score(y, model.predict(X))
+```
+
+✅ Good example (metric injected as abstraction):
+
+```python
+class Metric(ABC):
+    @abstractmethod
+    def calculate(self, y_true, y_pred): ...
+
+class Accuracy(Metric):
+    def calculate(self, y_true, y_pred):
+        return (y_true == y_pred).mean()
+
+def evaluate(model, X, y, metric: Metric):
+    return metric.calculate(y, model.predict(X))
+```
+
+---
+
+## 📌 3. Modules
+
+❌ Bad example (pipeline imports directly from TensorFlow):
+
+```python
+from tensorflow.keras import Model
+
+def train_pipeline():
+    model = Model(...)   # locked to TF
+```
+
+✅ Good example (pipeline depends on interface, actual backend chosen at config/runtime):
+
+```
+ml/
+  ├── interfaces/
+  │     └── model.py   # abstract Model class
+  ├── implementations/
+  │     ├── pytorch_model.py
+  │     ├── tensorflow_model.py
+  └── trainer.py
+```
+
+`trainer.py` imports only from `interfaces.model`, never directly from PyTorch/TensorFlow.
+
+---
+
+## 📌 4. Dependency Injection (DI)
+
+Use **constructor injection** or **factories**.
+
+✅ Example:
+
+```python
+class InferenceService:
+    def __init__(self, model: Model, metric: Metric):
+        self.model = model
+        self.metric = metric
+
+    def run(self, X, y):
+        return self.metric.calculate(y, self.model.predict(X))
+```
+
+At runtime:
+
+```python
+service = InferenceService(
+    model=RandomForestModel(),
+    metric=Accuracy()
+)
+```
+
+---
+
+## 📌 5. AI/ML Use Cases
+
+* **Swappable models**: Trainer doesn’t care if it’s PyTorch, TensorFlow, or scikit-learn.
+* **Config-driven experiments**: Swap models/optimizers/metrics from a YAML/JSON file.
+* **Testing**: Replace heavy models with mock models for fast unit tests.
+
+✅ Example with config-driven injection:
+
+```yaml
+model: "RandomForest"
+metric: "Accuracy"
+```
+
+```python
+def build_from_config(cfg):
+    model = registry.get_model(cfg["model"])
+    metric = registry.get_metric(cfg["metric"])
+    return InferenceService(model, metric)
+```
+
+---
+
+# ✅ Summary
+
+* **High-level modules** depend on **abstractions**, not implementations.
+* **Low-level details** (PyTorch, TensorFlow, sklearn) implement those abstractions.
+* Use **DI (constructor, factories, config)** to wire things together.
+* In AI/ML: DIP ensures your pipeline can evolve without rewriting core logic.

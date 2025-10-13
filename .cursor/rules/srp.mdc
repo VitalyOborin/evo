@@ -1,0 +1,244 @@
+---
+description: Single Responsibility Principle (SRP)
+globs:
+alwaysApply: true
+---
+When developing an application, it is MANDATORY to follow the Single Responsibility Principle (SRP).
+
+---
+
+# Single Responsibility Principle (SRP) in Python
+
+SRP: **A class, function, or module should have only one reason to change.**
+
+That is, each component is responsible for only **one task**.
+
+---
+
+## 📌 1. Classes
+
+❌ Bad example:
+
+```python
+class UserManager:
+def __init__(self):
+self.users = {}
+
+def add_user(self, user_id, data):
+self.users[user_id] = data
+
+def save_to_file(self, filename):
+with open(filename, "w") as f:
+f.write(str(self.users)) # ❌ Storage logic inside the manager
+```
+
+✅ Good example (separate storage and management):
+
+```python
+class UserRepository:
+def __init__(self):
+self.users = {}
+
+def add(self, user_id, data):
+self.users[user_id] = data
+
+def get(self, user_id):
+return self.users.get(user_id)
+
+class FileStorage:
+def save(self, data, filename):
+with open(filename, "w") as f:
+f.write(str(data))
+```
+
+---
+
+## 📌 2. Functions
+
+❌ Bad example:
+
+```python
+def process_order(order):
+# validation
+if not order.get("id"):
+raise ValueError("Invalid order")
+# calculation
+total = sum(item["price"] for item in order["items"])
+# sending notification
+print(f"Order {order['id']} processed with total {total}")
+```
+
+✅ Good example (each function does one thing):
+
+```python
+def validate_order(order):
+if not order.get("id"):
+raise ValueError("Invalid order")
+
+def calculate_total(order):
+return sum(item["price"] for item in order["items"])
+
+def notify(order_id, total):
+print(f"Order {order_id} processed with total {total}")
+
+def process_order(order):
+validate_order(order)
+total = calculate_total(order)
+notify(order["id"], total)
+```
+
+---
+
+## 📌 3. Modules
+
+❌ Bad example:
+`orders.py` contains everything: models, business logic, API.
+
+✅ Good example:
+
+```
+orders/
+├── models.py # DTO / dataclass
+├── services.py # business logic
+├── repository.py # working with DB
+├── api.py # REST handlers
+```
+
+---
+
+## 📌 4. Exceptions
+
+❌ Bad example:
+
+```python
+class OrderService:
+def process(self, order):
+try:
+# business logic
+...
+except Exception as e:
+print("Error", e) # ❌ logging inside the service
+```
+
+✅ Good example:
+
+```python
+class OrderService:
+def process(self, order):
+# business logic
+...
+
+class Logger:
+def log(self, message):
+print(message)
+```
+
+---
+
+## 📌 5. Configuration and dependencies
+
+❌ Bad example:
+
+```python
+class Mailer:
+def __init__(self):
+self.smtp_server = "smtp.example.com" # ❌ hardcoded
+```
+
+✅ Good example (externalized to configuration):
+
+```python
+class Mailer:
+def __init__(self, smtp_server: str):
+self.smtp_server = smtp_server
+```
+
+---
+
+## 📌 6. Data vs Behavior
+
+❌ Bad example (mixing DTO and logic):
+
+```python
+class User:
+def __init__(self, name):
+self.name = name
+
+def save_to_db(self): # ❌
+...
+```
+
+✅ Good example (pure DTO):
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class User:
+name: str
+```
+
+---
+
+## 📌 7. SRP in tests
+
+❌ Bad example:
+
+```python
+def test_user_creation_and_login():
+user = create_user("test")
+assert user.name == "test"
+token = login(user)
+assert token is not None
+```
+
+✅ Good example (one failure reason = one test):
+
+```python
+def test_user_creation():
+user = create_user("test")
+assert user.name == "test"
+
+def test_user_login():
+user = create_user("test")
+token = login(user)
+assert token is not None
+```
+
+---
+
+## 📌 8. SRP in asynchronous tasks
+
+❌ Bad example:
+
+```python
+async def handle_request(data):
+# parsing
+user_id = data.get("user")
+# logic
+...
+# logging
+print("Done")
+```
+
+✅ Good example:
+
+```python
+async def parse_request(data): ...
+async def business_logic(user_id): ...
+async def log(message): ...
+
+async def handle_request(data):
+user_id = parse_request(data)
+await business_logic(user_id)
+await log("Done")
+```
+
+---
+
+# ✅ Summary
+
+* **Function = one task**
+* **Class = one area of responsibility**
+* **Module = one reason to change**
+* **Isolation: storage, logic, infrastructure - separate**

@@ -1,0 +1,169 @@
+---
+description: Liskov Substitution Principle (LSP)
+globs:
+alwaysApply: true
+---
+# Liskov Substitution Principle (LSP) in Python
+
+**Definition**:
+
+> *Objects of a superclass should be replaceable with objects of its subclasses without breaking the correctness of the program.*
+
+In other words: **subtypes must behave consistently with their base types**.
+
+---
+
+## 📌 1. Classes
+
+❌ Bad example (violates LSP):
+
+```python
+class Model:
+    def fit(self, X, y): ...
+    def predict(self, X): ...
+
+class DummyModel(Model):
+    def fit(self, X, y):
+        raise NotImplementedError("Training not supported!")  # violates LSP
+
+    def predict(self, X):
+        return [0] * len(X)
+```
+
+Here `DummyModel` cannot be used wherever `Model` is expected, because `.fit()` breaks expectations.
+
+✅ Good example (LSP-compliant):
+
+```python
+from abc import ABC, abstractmethod
+
+class Model(ABC):
+    @abstractmethod
+    def fit(self, X, y): ...
+    @abstractmethod
+    def predict(self, X): ...
+
+class LogisticRegressionModel(Model):
+    def fit(self, X, y): ...
+    def predict(self, X): ...
+
+class RandomForestModel(Model):
+    def fit(self, X, y): ...
+    def predict(self, X): ...
+
+def evaluate(model: Model, X, y):
+    model.fit(X, y)
+    return model.predict(X)
+```
+
+Both `LogisticRegressionModel` and `RandomForestModel` can be used without breaking `evaluate`.
+
+---
+
+## 📌 2. Functions & Contracts
+
+**Key idea:** Subclasses must respect **input/output contracts**.
+
+❌ Bad example:
+
+```python
+class FileSaver:
+    def save(self, path: str): ...
+
+class CloudSaver(FileSaver):
+    def save(self, path: str):
+        if not path.startswith("http"):
+            raise ValueError("CloudSaver requires a URL!")  # breaks contract
+```
+
+✅ Good example:
+
+```python
+class CloudSaver(FileSaver):
+    def save(self, path: str):
+        # still works with string paths, but interprets them differently
+        upload_to_cloud(path)
+```
+
+---
+
+## 📌 3. AI/ML Use Cases
+
+### (a) Swappable Models
+
+* All models must implement `.fit()` and `.predict()` consistently.
+* Even if an internal algorithm differs (linear vs deep neural net), the interface stays valid.
+
+### (b) Metrics
+
+❌ Bad: a metric class that sometimes returns `None` instead of a float.
+✅ Good: all metrics return a numeric score, so evaluation pipelines don’t break.
+
+### (c) Preprocessors
+
+* A `Scaler` subclass must always transform input to the expected shape.
+* Returning different shapes violates LSP and breaks downstream models.
+
+---
+
+## 📌 4. Testing for LSP
+
+A practical way to enforce LSP is **behavioral tests for contracts**:
+
+```python
+def test_model_contract(model: Model):
+    X, y = [[1],[2],[3]], [0,1,0]
+    model.fit(X, y)
+    preds = model.predict(X)
+    assert len(preds) == len(X)
+```
+
+Run this test against all subclasses to ensure compliance.
+
+---
+
+## 📌 5. Modules & Pipelines
+
+❌ Bad example (violates LSP, not all steps interchangeable):
+
+```python
+class PipelineStep:
+    def run(self, data): ...
+
+class DataLoader(PipelineStep):
+    def run(self, data): return read_file(data)
+
+class Trainer(PipelineStep):
+    def run(self, data): return self.fit(data)  # expects (X,y), not arbitrary
+```
+
+✅ Good example:
+
+```python
+class PipelineStep:
+    def run(self, data): ...
+
+class Loader(PipelineStep):
+    def run(self, data): return load_data(data)
+
+class Transformer(PipelineStep):
+    def run(self, data): return normalize(data)
+
+class Predictor(PipelineStep):
+    def run(self, data): return self.model.predict(data)
+```
+
+Now each step respects the same contract: *input in → output out*.
+
+---
+
+# ✅ Summary
+
+* Subclasses should be **true subtypes** — they must respect the base class contract.
+* Never override a method in a way that **weakens guarantees** (e.g., raising unexpected errors, changing return types).
+* In AI/ML:
+
+  * **Models** must always implement `fit/predict`
+  * **Metrics** must return consistent types
+  * **Preprocessors** must not change expected data shape
+* Use **contract tests** to verify compliance.

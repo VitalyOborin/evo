@@ -1,0 +1,12 @@
+---
+description: Formatting, linter, code quality
+globs:
+alwaysApply: true
+---
+для всех публичных модулей должны быть указаны docstrings
+для всех публичных классов должны быть указаны docstrings 
+для всех публичных методов должны быть указаны docstrings 
+Для docstrings должны использоваться корректные отступы
+flake8 должен возвращать 0 ошибок
+pydocstyle должен возвращать 0 ошибок
+Код должен соответствовать стандартам PEP 8 и Google docstring format

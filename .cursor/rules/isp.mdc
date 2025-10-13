@@ -1,0 +1,151 @@
+---
+description: Interface Segregation Principle (ISP)
+globs:
+alwaysApply: true
+---
+
+# Interface Segregation Principle (ISP) in Python
+
+**Definition**:
+
+> *Clients should not be forced to depend on methods they do not use.*
+
+Instead of creating **large, “fat” interfaces**, split them into **smaller, role-specific contracts**.
+
+---
+
+## 📌 1. Classes
+
+❌ Bad example (fat interface):
+
+```python
+class Model:
+    def fit(self, X, y): ...
+    def predict(self, X): ...
+    def save(self, path): ...
+    def load(self, path): ...
+    def explain(self, X): ...   # not all models support explainability
+```
+
+✅ Good example (segregated interfaces):
+
+```python
+class Trainable:
+    def fit(self, X, y): ...
+
+class Inference:
+    def predict(self, X): ...
+
+class Serializable:
+    def save(self, path): ...
+    def load(self, path): ...
+
+class Explainable:
+    def explain(self, X): ...
+
+class RandomForestModel(Trainable, Inference, Serializable): ...
+class XGBoostModel(Trainable, Inference, Serializable, Explainable): ...
+```
+
+Now, clients depend only on the interfaces they actually use.
+
+---
+
+## 📌 2. Functions & Clients
+
+❌ Bad example:
+
+```python
+def serve_model(model):
+    model.fit(...)         # not needed
+    model.predict(...)
+    model.explain(...)     # not all models support this
+```
+
+✅ Good example:
+
+```python
+def serve_inference(model: Inference, X):
+    return model.predict(X)
+
+def explain_results(model: Explainable, X):
+    return model.explain(X)
+```
+
+Each client only depends on what it really needs.
+
+---
+
+## 📌 3. Modules
+
+❌ Bad example (one bloated module):
+
+```
+ml/
+  ├── models.py   # training, inference, serialization, metrics all mixed here
+```
+
+✅ Good example (segregated by roles):
+
+```
+ml/
+  ├── training.py
+  ├── inference.py
+  ├── serialization.py
+  ├── metrics.py
+```
+
+---
+
+## 📌 4. Dependency Injection
+
+ISP often pairs with **Dependency Inversion (DIP)**:
+
+* Provide only the interface a client cares about.
+
+✅ Example:
+
+```python
+class Trainer:
+    def __init__(self, model: Trainable):
+        self.model = model
+
+    def train(self, X, y):
+        self.model.fit(X, y)
+
+class Predictor:
+    def __init__(self, model: Inference):
+        self.model = model
+
+    def predict(self, X):
+        return self.model.predict(X)
+```
+
+Trainer doesn’t know anything about serialization or explainability.
+
+---
+
+## 📌 5. AI/ML Use Cases
+
+* **Data pipeline**:
+
+  * `Loader` (reads data)
+  * `Transformer` (applies preprocessing)
+  * `Saver` (writes output)
+
+Instead of one giant `Pipeline` class that does everything.
+
+* **Model serving**:
+
+  * `Predictor` (inference only)
+  * `Explainer` (optional interpretability)
+  * `Evaluator` (metrics for testing)
+
+---
+
+# ✅ Summary
+
+* Avoid “god interfaces” with too many methods.
+* Split contracts by **roles/responsibilities**.
+* Let clients depend only on what they actually use.
+* In AI/ML: segregate **training, inference, serialization, evaluation** into small interfaces.
