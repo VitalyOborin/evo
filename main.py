@@ -1,28 +1,5 @@
-"""
-Universal System AI Agent - Interactive CLI Chat Application
-
-This application creates an interactive CLI chat interface with a powerful AI agent
-that has full access to both PostgreSQL database and Windows system operations.
-Users can have conversations with the agent and request database queries or 
-system commands to be executed. Responses are streamed in real-time.
-
-Features:
-- Interactive CLI chat interface with real-time streaming responses
-- Full PostgreSQL database access (CREATE/DROP databases, tables, users, etc.)
-- Complete Windows system access (file operations, system info, networking, etc.)
-- Conversational AI with advanced capabilities
-- Real-time response streaming for improved interactivity
-- Secure command execution with timeouts and error handling
-- Modular architecture with separate tool modules
-
-Architecture:
-- tools/: Individual tool modules (sql_tool.py, shell_tool.py)
-- config/: Configuration and settings management
-- main.py: Application orchestration and CLI interface
-"""
-
 import asyncio
-from agents import Agent, Runner
+from agents import Agent, Runner, WebSearchTool
 
 # Import configuration and tools
 from config import load_environment, validate_environment, get_agent_config, get_welcome_message
@@ -85,7 +62,7 @@ async def main():
     agent = Agent(
         name=config['name'],
         instructions=config['instructions'],
-        tools=[execute_sql_query, execute_shell_command]
+        tools=[execute_sql_query, execute_shell_command, WebSearchTool()]
     )
     
     # Display welcome message
