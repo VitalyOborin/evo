@@ -63,7 +63,12 @@ async def main():
     agent = Agent(
         name=config['name'],
         instructions=config['instructions'],
-        tools=[execute_sql_query, execute_shell_command, WebSearchTool()]
+        model="gpt-5-mini",
+        tools=[
+            execute_sql_query,
+            execute_shell_command,
+            WebSearchTool()
+        ],
     )
     
     # Initialize session manager
