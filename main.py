@@ -1,18 +1,40 @@
+"""
+Main entry point for the Evolution AI Agent system.
+
+This module provides the interactive CLI interface for communicating
+with the AI agent system.
+"""
+
 import asyncio
-from agents import Agent, Runner, WebSearchTool, ModelSettings
-from openai.types.shared.reasoning import Reasoning
-from agents.extensions.memory.sqlalchemy_session import SQLAlchemySession
-
-# Import configuration and tools
-from config import load_environment, validate_environment, get_agent_config, get_welcome_message, create_session_manager
-from tools import execute_sql_query, execute_shell_command
+from agents import Runner
+from agents.extensions.memory import SQLAlchemySession
 
 
-# All tool functions are now imported from the tools package
+# Import configuration
+from config import (
+    load_environment, 
+    validate_environment, 
+    get_agent_config, 
+    get_welcome_message, 
+    create_session_manager
+)
+
+# Import AI agents
+from ai_agents import create_main_agent
 
 
-async def process_user_input(agent: Agent, user_input: str, session: SQLAlchemySession) -> None:
-    """Process a single user input with the AI agent using streaming."""
+async def process_user_input(agent, user_input: str, session: SQLAlchemySession) -> None:
+    """
+    Process a single user input with the AI agent using streaming.
+    
+    Args:
+        agent: The AI agent instance to process the request
+        user_input: User's text input
+        session: SQLAlchemy session for context preservation
+        
+    This function handles streaming of both reasoning process
+    and final responses with appropriate formatting.
+    """
     # ANSI color codes
     GRAY = "\033[90m"
     RESET = "\033[0m"
@@ -65,7 +87,16 @@ async def process_user_input(agent: Agent, user_input: str, session: SQLAlchemyS
 
 
 async def main():
-    """Main function that runs an interactive CLI chat with the AI agent."""
+    """
+    Main function that runs an interactive CLI chat with the AI agent.
+    
+    This function:
+    1. Loads and validates environment configuration
+    2. Creates the main orchestrator agent
+    3. Initializes session management
+    4. Runs an interactive chat loop
+    5. Handles cleanup on exit
+    """
     
     # Load environment variables
     load_environment()
@@ -79,21 +110,8 @@ async def main():
         print("\nPlease check your .env file and ensure all required variables are configured.")
         return
     
-    # Get agent configuration
-    config = get_agent_config()
-    
-    # Create an agent with SQL and system capabilities
-    agent = Agent(
-        name=config['name'],
-        instructions=config['instructions'],
-        model="gpt-5-mini",
-        model_settings=ModelSettings(reasoning=Reasoning(effort="low", summary="auto")),
-        tools=[
-            execute_sql_query,
-            execute_shell_command,
-            WebSearchTool()
-        ],
-    )
+    # Create the main orchestrator agent from ai_agents module
+    agent = create_main_agent()
     
     # Initialize session manager
     session_manager = create_session_manager()

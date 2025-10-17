@@ -9,7 +9,7 @@ import os
 import uuid
 from typing import Optional
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
-from agents.extensions.memory.sqlalchemy_session import SQLAlchemySession
+from agents.extensions.memory import SQLAlchemySession
 
 
 class SessionManager:
