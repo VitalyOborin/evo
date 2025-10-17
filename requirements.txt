@@ -57,3 +57,4 @@ rich
 tiktoken>=0.7.0
 opensearch-py
 httpx-socks
+qdrant-client
