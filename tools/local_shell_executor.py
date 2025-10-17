@@ -1,70 +1,79 @@
 """
-Local Shell Executor for Windows System.
+Shell Command Tool for Windows System.
 
-This module provides the shell executor function for the LocalShellTool
-from OpenAI Agents SDK. It handles execution of Windows CMD and PowerShell commands.
+This module provides the execute_shell_command function tool for the AI agent
+to perform any Windows system operations including:
+- File operations (dir, copy, move, del, mkdir, rmdir)
+- System information (systeminfo, tasklist, netstat)
+- Network operations (ping, curl, wget)
+- Package managers (pip, npm, choco)
+- Git operations (git status, commit, push)
+- Any other system commands available in Windows CMD or PowerShell
 """
 
-import os
 import subprocess
-from agents import LocalShellCommandRequest
+from agents import function_tool
 
 
-def shell_executor(request: LocalShellCommandRequest) -> str:
+@function_tool
+async def execute_shell_command(command: str) -> str:
     """
-    Execute shell commands on Windows system.
+    Execute any shell/command line command on the Windows system.
     
-    This function is used by LocalShellTool from OpenAI Agents SDK
-    to execute any Windows command line or PowerShell commands.
+    This function can execute ANY system commands including:
+    - File operations: dir, copy, move, del, mkdir, rmdir
+    - System information: systeminfo, tasklist, netstat
+    - Network operations: ping, curl, wget
+    - Package managers: pip, npm, choco
+    - Git operations: git status, git commit, git push
+    - PowerShell commands and scripts
+    - Any executable programs available in PATH
     
     Args:
-        request: LocalShellCommandRequest containing the command details
+        command: Any valid Windows command line or PowerShell command
         
     Returns:
-        str: The command output (stdout + stderr) or error message
+        str: The command output (stdout) or error message if command fails
         
     Examples:
-        Commands executed through this executor can include:
-        - File operations: dir, copy, move, del, mkdir, rmdir
-        - System information: systeminfo, tasklist, netstat
-        - Network operations: ping, curl, wget
-        - Package managers: pip, npm, choco
-        - Git operations: git status, git commit, git push
-        - PowerShell commands and scripts
+        dir - list current directory contents
+        pip list - show installed Python packages
+        git status - show git repository status
+        systeminfo - display system information
+        netstat -an - show network connections
     """
-    args = request.data.action
-    
     try:
-        # Execute command with proper Windows support
-        completed = subprocess.run(
-            args.command,
-            cwd=args.working_directory or os.getcwd(),
-            env={**os.environ, **args.env} if args.env else os.environ,
+        # Execute command with timeout to prevent hanging
+        # Use shell=True to support both cmd and PowerShell commands
+        result = subprocess.run(
+            command,
+            shell=True,
             capture_output=True,
             text=True,
-            timeout=(args.timeout_ms / 1000) if args.timeout_ms else 30,
-            shell=True,  # Required for Windows CMD/PowerShell commands
+            timeout=30,  # 30 seconds timeout
             encoding='utf-8',
             errors='replace'  # Handle encoding issues gracefully
         )
         
         # Combine stdout and stderr for complete output
         output = ""
-        if completed.stdout:
-            output += completed.stdout
-        if completed.stderr:
-            if output:
-                output += "\n"
-            output += completed.stderr
+        if result.stdout:
+            output += f"Output:\n{result.stdout}"
+        if result.stderr:
+            output += f"\nError/Warning messages:\n{result.stderr}"
         
-        # Add return code information for non-zero exits
-        if completed.returncode != 0:
-            output += f"\n[Exit code: {completed.returncode}]"
-        
-        return output if output else "Command executed successfully with no output."
+        # Add return code information
+        if result.returncode != 0:
+            output += f"\nCommand exited with return code: {result.returncode}"
+        else:
+            output += f"\nCommand executed successfully (return code: 0)"
+            
+        return output if output else "Command executed but produced no output."
         
     except subprocess.TimeoutExpired:
-        return f"⏰ Command execution timed out after {args.timeout_ms/1000 if args.timeout_ms else 30} seconds"
+        return f"Command timed out after 30 seconds: {command}"
+    except subprocess.CalledProcessError as e:
+        return f"Command failed with return code {e.returncode}: {e.stderr or 'No error message'}"
     except Exception as e:
-        return f"❌ Error executing command: {str(e)}"
+        return f"System error executing command: {str(e)}"
 

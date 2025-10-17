@@ -50,7 +50,7 @@ def create_coding_agent() -> Agent:
         instructions=load_instruction_template("coding.jinja2"),
         model="gpt-5-codex",
         model_settings=ModelSettings(
-            reasoning=Reasoning(effort="medium", summary="auto")
+            reasoning=Reasoning(effort="low", summary="auto")
         ),
         tools=[
             CodeInterpreterTool(tool_config={}),  # Enables Python code execution in secure sandbox

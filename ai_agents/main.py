@@ -5,9 +5,9 @@ This agent acts as the primary entry point and coordinates
 all other specialized agents in the system.
 """
 
-from agents import Agent, WebSearchTool, LocalShellTool, ModelSettings
+from agents import Agent, WebSearchTool, ModelSettings
 from openai.types.shared.reasoning import Reasoning
-from tools import execute_sql_query, shell_executor
+from tools import execute_sql_query, execute_shell_command
 from .coding import create_coding_agent
 from config import load_instruction_template
 
@@ -41,13 +41,13 @@ def create_main_agent() -> Agent:
     agent = Agent(
         name="main",
         instructions=load_instruction_template("main.jinja2"),
-        model="gpt-4.1-mini",
+        model="gpt-5-mini",
         model_settings=ModelSettings(
             reasoning=Reasoning(effort="low", summary="auto")
         ),
         tools=[
             execute_sql_query,
-            LocalShellTool(executor=shell_executor),
+            execute_shell_command,
             WebSearchTool(),
             coding_agent.as_tool(
                 tool_name="coding",
