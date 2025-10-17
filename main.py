@@ -21,6 +21,7 @@ from config import (
 
 # Import AI agents
 from ai_agents import create_main_agent
+from ai_agents import create_memory_agent
 
 
 async def process_user_input(agent, user_input: str, session: SQLAlchemySession) -> None:
@@ -47,6 +48,9 @@ async def process_user_input(agent, user_input: str, session: SQLAlchemySession)
     
     try:
         # Use run_streamed with session for context preservation
+        memory_agent = create_memory_agent()
+        memory_result = await Runner.run(memory_agent, user_input, session=session)
+        
         result = Runner.run_streamed(agent, user_input, session=session)
         
         # Process streaming events - show reasoning and final answer

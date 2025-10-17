@@ -11,9 +11,11 @@ acts as an orchestrator and can delegate tasks to specialized agents.
 
 from .main import create_main_agent
 from .coding import create_coding_agent
+from .memory import create_memory_agent
 
 __all__ = [
     'create_main_agent',
     'create_coding_agent',
+    'create_memory_agent',
 ]
 
