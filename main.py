@@ -1,5 +1,6 @@
 import asyncio
-from agents import Agent, Runner, WebSearchTool
+from agents import Agent, Runner, WebSearchTool, ModelSettings
+from openai.types.shared.reasoning import Reasoning
 from agents.extensions.memory.sqlalchemy_session import SQLAlchemySession
 
 # Import configuration and tools
@@ -64,6 +65,7 @@ async def main():
         name=config['name'],
         instructions=config['instructions'],
         model="gpt-5-mini",
+        model_settings=ModelSettings(reasoning=Reasoning(effort="medium", summary="detailed")),
         tools=[
             execute_sql_query,
             execute_shell_command,
