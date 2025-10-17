@@ -13,22 +13,44 @@ from tools import execute_sql_query, execute_shell_command
 
 async def process_user_input(agent: Agent, user_input: str, session: SQLAlchemySession) -> None:
     """Process a single user input with the AI agent using streaming."""
+    # ANSI color codes
+    GRAY = "\033[90m"
+    RESET = "\033[0m"
+    
     print("\n🤖 Processing your request...")
     print("=" * 60)
+    
+    reasoning_started = False
+    response_started = False
     
     try:
         # Use run_streamed with session for context preservation
         result = Runner.run_streamed(agent, user_input, session=session)
         
-        print("\n🎯 Agent Response:")
-        print("-" * 60)
-        
-        # Process streaming events - show ONLY final answer text
+        # Process streaming events - show reasoning and final answer
         async for event in result.stream_events():
             if hasattr(event, 'type') and event.type == "raw_response_event":
                 if hasattr(event, 'data'):
+                    # Check if this is a reasoning summary text delta event
+                    if event.data.type == "response.reasoning_summary_text.delta":
+                        if not reasoning_started:
+                            print(f"\n{GRAY}🧠 Reasoning Process:")
+                            print("-" * 60)
+                            reasoning_started = True
+                        
+                        if hasattr(event.data, 'delta') and event.data.delta:
+                            # Stream reasoning text as it comes in gray color
+                            print(f"{GRAY}{event.data.delta}{RESET}", end="", flush=True)
+                    
                     # Check if this is a ResponseTextDeltaEvent (final answer streaming)
-                    if event.data.__class__.__name__ == 'ResponseTextDeltaEvent':
+                    elif event.data.__class__.__name__ == 'ResponseTextDeltaEvent':
+                        if not response_started:
+                            if reasoning_started:
+                                print(f"{RESET}\n" + "-" * 60)
+                            print("\n🎯 Agent Response:")
+                            print("-" * 60)
+                            response_started = True
+                        
                         if hasattr(event.data, 'delta') and event.data.delta:
                             # This is the actual final answer text - stream it!
                             print(event.data.delta, end="", flush=True)
@@ -65,7 +87,7 @@ async def main():
         name=config['name'],
         instructions=config['instructions'],
         model="gpt-5-mini",
-        model_settings=ModelSettings(reasoning=Reasoning(effort="medium", summary="detailed")),
+        model_settings=ModelSettings(reasoning=Reasoning(effort="low", summary="auto")),
         tools=[
             execute_sql_query,
             execute_shell_command,
