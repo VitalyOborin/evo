@@ -13,9 +13,7 @@ sandbox environment, allowing it to test code, perform calculations,
 data analysis, and verify implementations.
 """
 
-from agents import Agent, CodeInterpreterTool, ModelSettings
-from agents.tool import CodeInterpreter
-from openai.types.shared.reasoning import Reasoning
+from agents import Agent, CodeInterpreterTool
 from config import load_instruction_template
 
 
@@ -49,12 +47,15 @@ def create_coding_agent() -> Agent:
         name="coding",
         instructions=load_instruction_template("coding.jinja2"),
         model="gpt-5-codex",
-        model_settings=ModelSettings(
-            reasoning=Reasoning(effort="low", summary="auto")
-        ),
-        tools=[
-            CodeInterpreterTool(tool_config={}),  # Enables Python code execution in secure sandbox
-        ],
+        # Note: gpt-5-codex doesn't support Reasoning settings (only o1/o3 models do)
+        # model_settings=ModelSettings(
+        #     reasoning=Reasoning(effort="medium", summary="auto")
+        # ),
+        #tools=[
+        #    CodeInterpreterTool(
+        #        tool_config={"type": "code_interpreter", "container": {"type": "auto"}}
+        #    )
+        #],
     )
     
     return agent
