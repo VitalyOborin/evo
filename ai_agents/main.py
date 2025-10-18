@@ -53,7 +53,6 @@ def create_main_agent() -> Agent:
                 tool_name="coding",
                 tool_description="Write application code and test it",
             ),
-            save_memory,
             recall_memory
         ],
     )
