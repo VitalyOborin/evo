@@ -1,13 +1,7 @@
-"""
-Memory agent for vector-based information storage and retrieval.
-"""
-
 import os
 import uuid
 from typing import List, Dict, Any
-from agents import Agent
 from agents import function_tool
-from config import load_instruction_template
 from openai import OpenAI
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct, VectorParams, Distance
@@ -160,23 +154,3 @@ def recall_memory(query: str, limit: int = 5) -> str:
 
     except Exception as e:
         return f"Failed to recall memory: {str(e)}"
-
-def create_memory_agent() -> Agent:
-    """
-    Create and configure the memory agent for vector-based information storage and retrieval.
-
-    Returns:
-        Agent: Configured memory agent with save_memory and recall_memory tools
-    """
-
-    agent = Agent(
-        name="memory",
-        instructions=load_instruction_template("memory.jinja2"),
-        model="gpt-4o-mini",
-        tools=[
-            save_memory,
-            recall_memory
-        ],
-    )
-
-    return agent

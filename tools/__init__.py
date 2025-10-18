@@ -11,8 +11,11 @@ and maintainability.
 
 from .sql_tool import execute_sql_query
 from .local_shell_executor import execute_shell_command
+from .memory_tool import save_memory, recall_memory
 
 __all__ = [
     'execute_sql_query',
-    'execute_shell_command'
+    'execute_shell_command',
+    'save_memory',
+    'recall_memory'
 ]

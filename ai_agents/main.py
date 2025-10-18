@@ -6,9 +6,8 @@ all other specialized agents in the system.
 """
 
 from agents import Agent, WebSearchTool
-from tools import execute_sql_query, execute_shell_command
+from tools import execute_sql_query, execute_shell_command, save_memory, recall_memory
 from .coding import create_coding_agent
-from .memory import create_memory_agent
 from config import load_instruction_template
 
 
@@ -36,7 +35,6 @@ def create_main_agent() -> Agent:
     
     # Create specialized agents that can be used as tools
     coding_agent = create_coding_agent()
-    memory_agent = create_memory_agent()
     
     # Create the main orchestrator agent with all available tools
     agent = Agent(
@@ -55,10 +53,8 @@ def create_main_agent() -> Agent:
                 tool_name="coding",
                 tool_description="Write application code and test it",
             ),
-            memory_agent.as_tool(
-                tool_name="memory",
-                tool_description="Search and retrieve information from the memory",
-            ),
+            save_memory,
+            recall_memory
         ],
     )
     
