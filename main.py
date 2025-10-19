@@ -22,6 +22,9 @@ from config import (
 # Import AI agents
 from ai_agents import create_main_agent
 
+# Import memory processor for parallel memory operations
+from memory_processor import start_memory_processing
+
 
 async def process_user_input(agent, user_input: str, session: SQLAlchemySession) -> None:
     """
@@ -34,6 +37,7 @@ async def process_user_input(agent, user_input: str, session: SQLAlchemySession)
         
     This function handles streaming of both reasoning process
     and final responses with appropriate formatting.
+    After processing, it starts a parallel process for memory operations.
     """
     # ANSI color codes
     GRAY = "\033[90m"
@@ -44,6 +48,7 @@ async def process_user_input(agent, user_input: str, session: SQLAlchemySession)
     
     reasoning_started = False
     response_started = False
+    agent_response_text = []  # Collect full response for memory processing
     
     try:
         # Use run_streamed with session for context preservation
@@ -75,10 +80,18 @@ async def process_user_input(agent, user_input: str, session: SQLAlchemySession)
 
                         if hasattr(event.data, 'delta') and event.data.delta:
                             # This is the actual final answer text - stream it!
-                            print(event.data.delta, end="", flush=True)
+                            delta_text = event.data.delta
+                            print(delta_text, end="", flush=True)
+                            # Collect the response for memory processing
+                            agent_response_text.append(delta_text)
         
         # Print separator after streaming is complete
         print("\n" + "-" * 60)
+        
+        # Start memory processing in a separate process (non-blocking)
+        full_response = "".join(agent_response_text)
+        if full_response.strip():  # Only process if we got a response
+            start_memory_processing(user_input, full_response)
         
     except Exception as e:
         print(f"\n[ERROR] Streaming error occurred: {str(e)}")
@@ -164,4 +177,12 @@ async def main():
 
 
 if __name__ == "__main__":
+    # Set multiprocessing start method for Windows compatibility
+    import multiprocessing
+    try:
+        multiprocessing.set_start_method('spawn', force=True)
+    except RuntimeError:
+        # Already set, ignore
+        pass
+    
     asyncio.run(main())
