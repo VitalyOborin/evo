@@ -11,3 +11,5 @@ __pycache__
 listing.txt
 logs/
 .venv/
+*.egg-info/
+uv.lock
